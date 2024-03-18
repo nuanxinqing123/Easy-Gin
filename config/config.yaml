@@ -1,0 +1,53 @@
+# 项目配置
+app:
+  # 项目运行端口
+  port: 8080
+  # 模式 debug | release
+  mode: "debug"
+
+# JWT配置
+jwt:
+  # 签名密钥(推荐长度在 32 位以上)
+  signing-key: ''
+  # 过期时间, 单位：天
+  expires-time: 30
+  # 缓冲时间, 单位：天
+  buffer-time: 31
+  # 签发者
+  issuer: 'Easy-Gin'
+
+# MySQL配置
+mysql:
+  path: 'localhost'
+  port: '3306'
+  config: 'charset=utf8mb4&parseTime=True&loc=Local'
+  db-name: 'Easy-Gin'
+  username: 'root'
+  password: 'Easy-Gin'
+  prefix: "" # 全局表前缀，单独定义 TableName 则不生效
+  singular: false # 是否开启全局禁用复数，true表示不开启
+  engine: "" # 引擎，默认InnoDB
+  max-idle-conns: 10
+  max-open-conns: 100
+  log-mode: true
+  log-zap: false
+
+# Redis配置
+redis:
+  host: 'localhost'
+  port: 6379
+  password: ''
+  db: 0
+  pool-size: 100
+
+# 日志配置
+zap: # 日志配置
+  level: debug # 日志级别
+  prefix: '[Easy-Gin]' # 日志前缀
+  format: json # 输出
+  director: logs # 日志存放的文件
+  encode_level: LowercaseColorLevelEncoder # 编码级别
+  stacktrace_key: stacktrace # 栈名
+  max_age: 30 # 日志留存时间, 单位：天
+  show_line: true # 显示行
+  log_in_console: true # 输出控制台
