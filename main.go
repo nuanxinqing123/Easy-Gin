@@ -28,21 +28,21 @@ func main() {
 	config.GinLOG = initialize.Zap()
 
 	// 初始化数据库
-	// config.GinDB = initialize.Gorm() // gorm连接数据库
-	// if config.GinDB != nil {
-	// 	// 初始化表
-	// 	initialize.RegisterTables(config.GinDB)
-	// 	fmt.Println("数据库初始化成功")
-	// } else {
-	// 	fmt.Println("数据库启动失败...")
-	// 	return
-	// }
-	//
-	// // 初始化 Redis
-	// config.GinRedis = initialize.InitRedis()
-	// if config.GinRedis == nil {
-	// 	fmt.Println("Redis初始化成功")
-	// }
+	config.GinDB = initialize.Gorm() // gorm连接数据库
+	if config.GinDB != nil {
+		// 初始化表
+		initialize.RegisterTables(config.GinDB)
+		fmt.Println("数据库初始化成功")
+	} else {
+		fmt.Println("数据库启动失败...")
+		return
+	}
+
+	// 初始化 Redis
+	config.GinRedis = initialize.InitRedis()
+	if config.GinRedis == nil {
+		fmt.Println("Redis初始化成功")
+	}
 
 	// 初始化雪花 ID 算法
 	if err := utils.InitSnowflake(); err != nil {
