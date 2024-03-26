@@ -44,8 +44,7 @@ func Login(p *model.Login) (res.ResCode, any) {
 		return res.CodeGenericError, "该账号已被暂停"
 	}
 
-	// 初始化 JWT
-	j := _jwt.NewJWT()
+	j := _jwt.NewJWT() // 初始化 JWT
 	jt := _jwt.BaseClaims{
 		JTI:    utils.GenID(),
 		UserId: m.UserID,
@@ -95,8 +94,7 @@ func Register(p *model.Register) (res.ResCode, any) {
 	}
 
 	// 创建成功, 则返回Token
-	// 初始化 JWT
-	j := _jwt.NewJWT()
+	j := _jwt.NewJWT() // 初始化 JWT
 	jt := _jwt.BaseClaims{
 		JTI:    utils.GenID(),
 		UserId: user.UserID,

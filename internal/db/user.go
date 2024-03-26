@@ -15,7 +15,7 @@ type User struct {
 // GetUserByUserID 用户ID 获取数据
 func GetUserByUserID(userId string) (User, error) {
 	var m User
-	if err := config.GinDB.Model(&m).Where("user_id = ?", userId).
+	if err := config.GinDB.Model(&m).Omit("password").Where("user_id = ?", userId).
 		First(&m).Error; err != nil {
 		return m, err
 	}

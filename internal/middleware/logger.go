@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"Easy-Gin/config"
+	_const "Easy-Gin/const"
 )
 
 type bodyLogWriter struct {
@@ -53,5 +54,5 @@ func Logger() gin.HandlerFunc {
 }
 
 func TimeFormat(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05")
+	return t.Format(_const.TimeFormatAll)
 }

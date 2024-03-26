@@ -17,8 +17,5 @@ func Info(userId string) (res.ResCode, any) {
 		return res.CodeServerBusy, _const.ServerBusy
 	}
 
-	// 置空密码
-	m.PassWord = ""
-
 	return res.CodeSuccess, m
 }
