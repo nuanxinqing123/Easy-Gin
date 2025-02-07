@@ -9,10 +9,12 @@ app:
 jwt:
   # 签名密钥(推荐长度在 32 位以上)
   signing-key: ''
-  # 过期时间, 单位：天
-  expires-time: 30
+  # access token过期时间, 单位：天
+  expires-time: 1
+  # refresh token过期时间, 单位：天
+  refresh-expires-time: 30
   # 缓冲时间, 单位：天
-  buffer-time: 31
+  buffer-time: 1
   # 签发者
   issuer: 'Easy-Gin'
 

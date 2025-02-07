@@ -52,13 +52,13 @@ func Login(p *model.Login) (res.ResCode, any) {
 	}
 
 	// 生成Token
-	token, err := j.CreateToken(j.CreateClaims(jt))
+	tokenResponse, err := j.CreateTokens(jt)
 	if err != nil {
 		config.GinLOG.Error(err.Error())
 		return res.CodeServerBusy, _const.ServerBusy
 	}
 
-	return res.CodeSuccess, token
+	return res.CodeSuccess, tokenResponse
 }
 
 // Register 用户注册
@@ -102,11 +102,33 @@ func Register(p *model.Register) (res.ResCode, any) {
 	}
 
 	// 生成Token
-	token, err := j.CreateToken(j.CreateClaims(jt))
+	tokenResponse, err := j.CreateTokens(jt)
 	if err != nil {
 		config.GinLOG.Error(err.Error())
 		return res.CodeServerBusy, _const.ServerBusy
 	}
 
-	return res.CodeSuccess, token
+	return res.CodeSuccess, tokenResponse
+}
+
+// RefreshToken 刷新Token
+func RefreshToken(refreshToken string) (res.ResCode, any) {
+	j := _jwt.NewJWT()
+
+	// 刷新Token
+	tokenResponse, err := j.RefreshTokens(refreshToken)
+	if err != nil {
+		// 判断错误类型
+		switch err {
+		case _jwt.ErrTokenExpired:
+			return res.CodeGenericError, "refresh token已过期，请重新登录"
+		case _jwt.ErrTokenTypeError:
+			return res.CodeGenericError, "无效的refresh token"
+		default:
+			config.GinLOG.Error(err.Error())
+			return res.CodeServerBusy, _const.ServerBusy
+		}
+	}
+
+	return res.CodeSuccess, tokenResponse
 }

@@ -4,14 +4,22 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/sync/singleflight"
-
 	"Easy-Gin/config"
+
+	"github.com/golang-jwt/jwt/v4"
+)
+
+// TokenType 定义token类型
+type TokenType string
+
+const (
+	AccessToken  TokenType = "access"
+	RefreshToken TokenType = "refresh"
 )
 
 type CustomClaims struct {
 	BaseClaims
+	TokenType  TokenType // token类型：access 或 refresh
 	BufferTime int64
 	jwt.RegisteredClaims
 }
@@ -26,11 +34,18 @@ type JWT struct {
 	SigningKey []byte
 }
 
+// TokenInfo 返回给客户端的token信息
+type TokenInfo struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 var (
-	TokenExpired     = errors.New("token is expired")
-	TokenNotValidYet = errors.New("token not active yet")
-	TokenMalformed   = errors.New("that's not even a token")
-	TokenInvalid     = errors.New("couldn't handle this token")
+	ErrTokenExpired     = errors.New("token is expired")           // token已过期
+	ErrTokenNotValidYet = errors.New("token not active yet")       // token未激活
+	ErrTokenMalformed   = errors.New("that's not even a token")    // token不是一个token
+	ErrTokenInvalid     = errors.New("couldn't handle this token") // token无法处理
+	ErrTokenTypeError   = errors.New("token type is invalid")      // token类型不正确
 )
 
 func NewJWT() *JWT {
@@ -39,36 +54,76 @@ func NewJWT() *JWT {
 	}
 }
 
-func (j *JWT) CreateClaims(baseClaims BaseClaims) CustomClaims {
+// createClaims 创建Claims
+func (j *JWT) createClaims(baseClaims BaseClaims, tokenType TokenType) CustomClaims {
+	var expiresTime time.Duration
+
+	// 根据token类型设置过期时间
+	if tokenType == AccessToken {
+		expiresTime = time.Hour * 24 * time.Duration(config.GinConfig.JWT.ExpiresTime)
+	} else {
+		expiresTime = time.Hour * 24 * time.Duration(config.GinConfig.JWT.RefreshExpiresTime)
+	}
+
 	claims := CustomClaims{
 		BaseClaims: baseClaims,
-		BufferTime: config.GinConfig.JWT.BufferTime, // 缓冲时间1天 缓冲时间内会获得新的token刷新令牌 此时一个用户会存在两个有效令牌 但是前端只留一个 另一个会丢失
+		TokenType:  tokenType,
+		BufferTime: config.GinConfig.JWT.BufferTime,
 		RegisteredClaims: jwt.RegisteredClaims{
-			// 生成一个全局唯一ID
-			NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Millisecond)),                                                // 签名生效时间
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * time.Duration(config.GinConfig.JWT.ExpiresTime))), // 过期时间
-			Issuer:    config.GinConfig.JWT.Issuer,                                                                          // 签名的发行者
+			NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Millisecond)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresTime)),
+			Issuer:    config.GinConfig.JWT.Issuer,
 		},
 	}
 	return claims
 }
 
-// CreateToken 创建一个token
-func (j *JWT) CreateToken(claims CustomClaims) (string, error) {
+// CreateTokens 创建Access Token和Refresh Token
+func (j *JWT) CreateTokens(baseClaims BaseClaims) (*TokenInfo, error) {
+	// 创建Access Token
+	accessClaims := j.createClaims(baseClaims, AccessToken)
+	accessToken, err := j.createToken(accessClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建Refresh Token
+	refreshClaims := j.createClaims(baseClaims, RefreshToken)
+	refreshToken, err := j.createToken(refreshClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TokenInfo{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+// createToken 创建一个token
+func (j *JWT) createToken(claims CustomClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(j.SigningKey)
 }
 
-// CreateTokenByOldToken 旧token 换新token 使用归并回源避免并发问题
-func (j *JWT) CreateTokenByOldToken(oldToken string, claims CustomClaims) (string, error) {
-	control := &singleflight.Group{}
-	v, err, _ := control.Do("JWT:"+oldToken, func() (interface{}, error) {
-		return j.CreateToken(claims)
-	})
-	return v.(string), err
+// RefreshTokens 使用Refresh Token刷新Access Token和Refresh Token
+func (j *JWT) RefreshTokens(refreshToken string) (*TokenInfo, error) {
+	// 解析refresh token
+	claims, err := j.ParseToken(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// 验证token类型
+	if claims.TokenType != RefreshToken {
+		return nil, ErrTokenTypeError
+	}
+
+	// 创建新的token对
+	return j.CreateTokens(claims.BaseClaims)
 }
 
-// ParseToken 解析 token
+// ParseToken 解析token
 func (j *JWT) ParseToken(tokenString string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (i interface{}, e error) {
 		return j.SigningKey, nil
@@ -77,14 +132,14 @@ func (j *JWT) ParseToken(tokenString string) (*CustomClaims, error) {
 		var ve *jwt.ValidationError
 		if errors.As(err, &ve) {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				return nil, TokenMalformed
+				return nil, ErrTokenMalformed
 			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				// Token is expired
-				return nil, TokenExpired
+				return nil, ErrTokenExpired
 			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
-				return nil, TokenNotValidYet
+				return nil, ErrTokenNotValidYet
 			} else {
-				return nil, TokenInvalid
+				return nil, ErrTokenInvalid
 			}
 		}
 	}
@@ -92,9 +147,8 @@ func (j *JWT) ParseToken(tokenString string) (*CustomClaims, error) {
 		if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 			return claims, nil
 		}
-		return nil, TokenInvalid
-
+		return nil, ErrTokenInvalid
 	} else {
-		return nil, TokenInvalid
+		return nil, ErrTokenInvalid
 	}
 }
