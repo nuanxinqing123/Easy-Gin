@@ -25,7 +25,6 @@ type CustomClaims struct {
 }
 
 type BaseClaims struct {
-	JTI    string // 全局唯一ID
 	UserId string // 用户ID
 	Role   string // 角色
 }

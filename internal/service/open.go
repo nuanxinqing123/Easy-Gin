@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 
-	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
 
 	"Easy-Gin/config"
@@ -14,8 +13,6 @@ import (
 	res "Easy-Gin/pkg/response"
 	"Easy-Gin/utils"
 )
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Login 用户登录
 func Login(p *model.Login) (res.ResCode, any) {
@@ -46,7 +43,6 @@ func Login(p *model.Login) (res.ResCode, any) {
 
 	j := _jwt.NewJWT() // 初始化 JWT
 	jt := _jwt.BaseClaims{
-		JTI:    utils.GenID(),
 		UserId: m.UserID,
 		Role:   m.Role,
 	}
@@ -96,7 +92,6 @@ func Register(p *model.Register) (res.ResCode, any) {
 	// 创建成功, 则返回Token
 	j := _jwt.NewJWT() // 初始化 JWT
 	jt := _jwt.BaseClaims{
-		JTI:    utils.GenID(),
 		UserId: user.UserID,
 		Role:   user.Role,
 	}
@@ -119,10 +114,10 @@ func RefreshToken(refreshToken string) (res.ResCode, any) {
 	tokenResponse, err := j.RefreshTokens(refreshToken)
 	if err != nil {
 		// 判断错误类型
-		switch err {
-		case _jwt.ErrTokenExpired:
+		switch {
+		case errors.Is(err, _jwt.ErrTokenExpired):
 			return res.CodeGenericError, "refresh token已过期，请重新登录"
-		case _jwt.ErrTokenTypeError:
+		case errors.Is(err, _jwt.ErrTokenTypeError):
 			return res.CodeGenericError, "无效的refresh token"
 		default:
 			config.GinLOG.Error(err.Error())

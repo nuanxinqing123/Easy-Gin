@@ -5,14 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"Easy-Gin/config"
 	"Easy-Gin/internal/model"
 	_jwt "Easy-Gin/pkg/jwt"
 	res "Easy-Gin/pkg/response"
 )
 
 const CtxUserID = "UserID"
-const jti = "jti"
 
 var jwt _jwt.JWT
 
@@ -54,16 +52,8 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
-		// 查询Redis中 jti 是否存在
-		if config.GinRedis.Exists(mc.JTI).Val() == 1 {
-			res.ResError(c, res.CodeNeedLogin)
-			c.Abort()
-			return
-		}
-
 		// 将当前请求的userID信息保存到请求的上下文c上
 		c.Set(CtxUserID, mc.UserId)
-		c.Set(jti, mc.JTI)
 		c.Next()
 	}
 }
@@ -94,13 +84,6 @@ func AdminAuth() gin.HandlerFunc {
 			return
 		}
 
-		// 查询Redis中 jti 是否存在
-		if config.GinRedis.Exists(mc.JTI).Val() == 1 {
-			res.ResError(c, res.CodeNeedLogin)
-			c.Abort()
-			return
-		}
-
 		// 检查是否属于管理员
 		if mc.Role != model.AdminRole {
 			c.Abort()
@@ -109,7 +92,6 @@ func AdminAuth() gin.HandlerFunc {
 		} else {
 			// 将当前请求的userID信息保存到请求的上下文c上
 			c.Set(CtxUserID, mc.UserId)
-			c.Set(jti, mc.JTI)
 			c.Next()
 		}
 	}
