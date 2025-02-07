@@ -1,0 +1,36 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+.idea/'
+
+.DS_Store
+web/.vscode/settings.json
+
+# Intellij IDEA Files
+.idea/*
+!.idea/vcs.xml
+!.idea/icon.png
+.ideaDataSources/
+*.iml
+.vscode
+logs/*
