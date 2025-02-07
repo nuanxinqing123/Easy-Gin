@@ -35,10 +35,5 @@ func Routers() *gin.Engine {
 	ApiGroupAuth := Router.Group("/api")
 	ApiGroupAuth.Use(middleware.Auth())
 	router.InitRouterUser(ApiGroupAuth)
-
-	ApiGroupAdmin := Router.Group("/api/admin")
-	ApiGroupAdmin.Use(middleware.AdminAuth())
-	router.InitRouterAdmin(ApiGroupAdmin)
-
 	return Router
 }

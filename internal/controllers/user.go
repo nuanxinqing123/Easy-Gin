@@ -8,7 +8,6 @@ import (
 )
 
 const CtxUserID = "UserID"
-const jti = "jti"
 
 /*  用户操作  */
 
@@ -32,13 +31,4 @@ func (c *UserController) Info(ctx *gin.Context) {
 	} else {
 		res.ResErrorWithMsg(ctx, resCode, msg) // 失败
 	}
-}
-
-/*  管理员操作  */
-
-type UserAdminController struct{}
-
-// Router 注册路由
-func (c *UserAdminController) Router(r *gin.RouterGroup) {
-
 }
