@@ -44,6 +44,7 @@ func Logger() gin.HandlerFunc {
 		// 结束时间
 		endTime := time.Now()
 
+		// 定制自己的日志数据
 		config.GinLOG.Info("请求响应",
 			zap.String("client_ip", c.ClientIP()),
 			zap.String("request_time", TimeFormat(startTime)),
