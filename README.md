@@ -19,3 +19,4 @@
 - [`Go-JWT`](https://github.com/golang-jwt/jwt): JSON Web Token (JWT)
 - [`Viper`](https://github.com/spf13/viper): 配置文件解析库
 - [`Snowflake`](https://github.com/bwmarrin/snowflake): 用于生成或解析 Twitter 雪花 ID 生成器
+- [`Go-Resty`](https://github.com/go-resty/resty): 适用于 Go 的简单 HTTP、REST 和 SSE 客户端库
